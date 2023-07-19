@@ -1,0 +1,5 @@
+forge-std/=lib/forge-std/
+oz/=lib/openzeppelin-contracts/
+solmate/=lib/solmate/
+v3-core/=lib/v3-core/
+@prb/math/=lib/prb-math/src/
