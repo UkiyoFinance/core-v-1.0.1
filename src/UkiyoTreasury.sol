@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.19;
+pragma solidity >=0.8.20;
 
 // Interest Rate Functionality is taken from Frax Finance Variable V2 Interest Rate Model
 // Frax Finance Interest Rate Model Github: https://github.com/FraxFinance/fraxlend/blob/main/src/contracts/VariableInterestRate.sol
@@ -124,8 +124,8 @@ contract UkiyoTreasury {
             }
             mintedAmount := div(mul(callvalue(), exp(10, 18)), backingPerToken)
             teamShares := div(mul(mintedAmount, TEAM_SHARES), PRECISION)
-            let liquidityShares := div(mul(mintedAmount, LIQUIDITY_SHARES), PRECISION)
-            let treasuryShares := div(mul(mintedAmount, TREASURY_SHARES), PRECISION)
+            let liquidityShares := div(mul(callvalue(), LIQUIDITY_SHARES), PRECISION)
+            let treasuryShares := div(mul(callvalue(), TREASURY_SHARES), PRECISION) 
             mintedAmount := sub(mintedAmount, teamShares)
 
             let ptr := mload(0x40)
@@ -142,8 +142,8 @@ contract UkiyoTreasury {
 
             ptr := add(ptr, 4)
             let id := mload(ptr)
-
             ptr := add(ptr, 32)
+
             mstore(ptr, 0x0d1e3e9800000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), id)
             mstore(add(ptr, 36), liquidityShares)
@@ -151,8 +151,8 @@ contract UkiyoTreasury {
 
             ptr := add(ptr, 68)
             managerMintAmount := mload(ptr)
-
             ptr := add(ptr, 32)
+
             mstore(ptr, 0x94bf804d00000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), managerMintAmount)
             mstore(add(ptr, 36), and(manager, 0xffffffffffffffffffffffffffffffffffffffff))
@@ -163,6 +163,7 @@ contract UkiyoTreasury {
             }
 
             ptr := add(ptr, 68)
+
             mstore(ptr, 0x617d6d6e00000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), id)
             mstore(add(ptr, 36), liquidityShares)
@@ -174,6 +175,7 @@ contract UkiyoTreasury {
             }
 
             ptr := add(ptr, 100)
+
             mstore(ptr, 0x4dcd454700000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), and(address(), 0xffffffffffffffffffffffffffffffffffffffff))
             let result6 := call(gas(), FRAX_MINTER, treasuryShares, ptr, 36, 0, 0)
@@ -183,6 +185,7 @@ contract UkiyoTreasury {
             }
 
             ptr := add(ptr, 36)
+
             mstore(ptr, 0x94bf804d00000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), teamShares)
             mstore(add(ptr, 36), and(TEAM_ADDRESS, 0xffffffffffffffffffffffffffffffffffffffff))
@@ -194,6 +197,7 @@ contract UkiyoTreasury {
 
             mintedAmount := sub(mintedAmount, managerMintAmount)
             ptr := add(ptr, 68)
+
             mstore(ptr, 0x94bf804d00000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), mintedAmount)
             mstore(add(ptr, 36), and(caller(), 0xffffffffffffffffffffffffffffffffffffffff))
@@ -215,7 +219,6 @@ contract UkiyoTreasury {
         external
         returns (uint256 wethAmount, uint256 stakedEthAmount, uint256 liquidity, uint256 positionSupply)
     {
-        uint256 backingPerToken = backing();
         address token = ukiyo;
         address manager = poolManager;
         assembly {
@@ -229,22 +232,25 @@ contract UkiyoTreasury {
             let stakedTreasuryBalance := add(mload(ptr), sload(totalLoansOut.slot))
 
             ptr := add(ptr, 32)
+
             mstore(ptr, 0x18160ddd00000000000000000000000000000000000000000000000000000000)
             pop(staticcall(gas(), token, ptr, 4, add(ptr, 4), 32))
 
             ptr := add(ptr, 4)
+
             let totalSupply := sub(mload(ptr), exp(10, 18))
 
             ptr := add(ptr, 32)
+
             mstore(ptr, 0x053d677e00000000000000000000000000000000000000000000000000000000)
             pop(staticcall(gas(), manager, ptr, 4, add(ptr, 4), 32))
             positionSupply := mload(add(ptr, 4))
 
-            let totalBackingOwed := div(mul(backingPerToken, amount), exp(10, 18))
             stakedEthAmount := div(mul(stakedTreasuryBalance, amount), totalSupply)
             let sender := caller()
 
-            ptr := add(ptr, 32)
+            ptr := add(ptr, 36)
+
             mstore(ptr, 0x735d80e300000000000000000000000000000000000000000000000000000000)
             pop(staticcall(gas(), manager, ptr, 4, add(ptr, 4), 32))
 
@@ -252,23 +258,25 @@ contract UkiyoTreasury {
             let totalAvailableLiquidity := mload(ptr)
 
             ptr := add(ptr, 32)
+
             mstore(ptr, 0x6f862a6e00000000000000000000000000000000000000000000000000000000)
             pop(staticcall(gas(), manager, ptr, 4, add(ptr, 4), 32))
 
             ptr := add(ptr, 4)
             let initialLiquidity := mload(ptr)
+            ptr := add(ptr, 32)
 
             liquidity :=
                 div(mul(amount, sub(totalAvailableLiquidity, initialLiquidity)), sub(totalSupply, positionSupply))
 
-            ptr := add(ptr, 32)
+           
             mstore(ptr, 0x5f6285db00000000000000000000000000000000000000000000000000000000)
             pop(staticcall(gas(), manager, ptr, 4, add(ptr, 4), 32))
 
             ptr := add(ptr, 4)
             let tokenId := mload(ptr)
-
             ptr := add(ptr, 32)
+
             mstore(ptr, 0x99d7b59400000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), tokenId)
             mstore(add(ptr, 36), liquidity)
@@ -335,7 +343,7 @@ contract UkiyoTreasury {
             let ptr := mload(0x40)
             mstore(ptr, 0xfcd3533c00000000000000000000000000000000000000000000000000000000)
             mstore(add(ptr, 4), amountBurned)
-            mstore(add(ptr, 36), address())
+            mstore(add(ptr, 36), and(address(), 0xffffffffffffffffffffffffffffffffffffffff))
             let result := call(gas(), token, 0, ptr, 68, 0, 0)
             if eq(result, 0) {
                 mstore(0, 0x6f16aafc00000000000000000000000000000000000000000000000000000000)
@@ -453,6 +461,30 @@ contract UkiyoTreasury {
         emit Repay(msg.sender, amount, loan);
     }
 
+    function repayAll() external {
+        updateDecay();
+        Loan memory loan = updateLoan(loans[msg.sender]);
+        if (loan.borrowed == 0) revert NoActiveLoan();
+        uint256 amount = loan.borrowed;
+        totalLoansOut -= amount;
+        loan.borrowed = 0;
+        loans[msg.sender] = loan;
+        address token = ukiyo;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, 0x23b872dd00000000000000000000000000000000000000000000000000000000)
+            mstore(add(ptr, 4), and(caller(), 0xffffffffffffffffffffffffffffffffffffffff))
+            mstore(add(ptr, 36), and(address(), 0xffffffffffffffffffffffffffffffffffffffff))
+            mstore(add(ptr, 68), amount)
+            let success := call(gas(), token, 0, ptr, 100, 0, 0)
+            if eq(success, 0) {
+                mstore(0, 0x7939f42400000000000000000000000000000000000000000000000000000000)
+                revert(0, 4)
+            }
+        }
+        emit Repay(msg.sender, amount, loan);
+    }
+
     ///@param amount the amount of collateral tokens the user would like to remove
     function removeCollateral(uint128 amount) external {
         updateDecay();
@@ -564,6 +596,7 @@ contract UkiyoTreasury {
         } else {
             terminated = false;
         }
+        emit Terminated(user, loan, block.timestamp);
     }
 
     //============================================================\\
@@ -629,8 +662,8 @@ contract UkiyoTreasury {
         address token = ukiyo;
         assembly {
             let ptr := mload(0x40)
-            mstore(ptr, 0x70a082300000000000000000000000000000000000000000000000000000000)
-            mstore(add(ptr, 4), address())
+            mstore(ptr, 0x70a0823100000000000000000000000000000000000000000000000000000000)
+            mstore(add(ptr, 4), and(address(), 0xffffffffffffffffffffffffffffffffffffffff))
             pop(staticcall(gas(), STAKED_FRAX_ETH, ptr, 36, add(ptr, 36), 32))
             let treasuryBalance := add(mload(add(ptr, 36)), sload(totalLoansOut.slot))
 
@@ -682,6 +715,27 @@ contract UkiyoTreasury {
     ///@notice current interest rate.
     function currentRate() external view returns (uint64) {
         return currentRateInfo.ratePerSec;
+    }
+
+    function estimateMintAmount(uint256 amount) external view returns(uint256 estimatation) {
+        uint256 _backing = backing();
+        uint256 intermediate = (amount * _backing) / 1e18;
+        address manager = poolManager;
+        assembly {
+            let ptr := mload(0x40) 
+            mstore(ptr, 0x5f6285db00000000000000000000000000000000000000000000000000000000)
+            pop(staticcall(gas(), manager, ptr, 4, add(ptr, 4), 32))
+            let tokenId := mload(add(ptr, 4))
+            ptr := add(ptr, 36)
+
+            mstore(ptr, 0x0d1e3e9800000000000000000000000000000000000000000000000000000000)
+            mstore(add(ptr, 4), tokenId)
+            mstore(add(ptr, 36), div(mul(amount, LIQUIDITY_SHARES), PRECISION))
+            pop(staticcall(gas(), manager, ptr, 68, add(ptr, 68), 32))
+            let liquidityTake := mload(add(ptr, 68))
+
+            estimatation := sub(sub(intermediate, div(mul(intermediate, TEAM_SHARES), PRECISION)), liquidityTake)
+        }
     }
 
     ///@notice view function to help determine the max borrow amount for a given amount of collateral at the current time
@@ -988,6 +1042,7 @@ contract UkiyoTreasury {
     error LoanAlreadyCreated();
     error Zero();
     error OverMaxBorrow();
+    error NoActiveLoan();
     error InvalidCaller();
     error Timelock();
     error BorrowedAmount();
@@ -1011,6 +1066,7 @@ contract UkiyoTreasury {
         address indexed caller, uint256 depositAmount, uint256 userAmount, uint256 liquidityAmount, uint256 teamShares
     );
     event Repay(address indexed caller, uint256 repaymentAmount, Loan updatedLoan);
+    event Terminated(address indexed user, Loan loan, uint256 timestamp);
     event UpdateLoan(Loan updatedLoan);
     event UpdateRate(uint64 ratePerSec, uint64 fullUtilizationRate, uint64 newRate, uint64 newFullUtilizationRate);
 

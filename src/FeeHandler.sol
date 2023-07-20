@@ -1,6 +1,6 @@
 //SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.19;
+pragma solidity >=0.8.20;
 
 import {IERC20} from "oz/contracts/token/ERC20/IERC20.sol";
 import {WETH} from "solmate/src/tokens/WETH.sol";
@@ -90,6 +90,7 @@ contract FeeHandler {
         if (!sent) {
             revert UnableToRefund();
         }
+        WETH9.transfer(msg.sender, numTokens);
         emit Purchase(msg.sender, to, numTokens, paidAmount, refund);
     }
 
